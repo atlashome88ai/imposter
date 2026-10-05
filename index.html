@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Imposter!</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#2A1458">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Imposter">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🕵️</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@600;800;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.5/dist/peerjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<style>
+:root{
+  --grape:#2A1458; --grape-2:#3B1D78; --sun:#FFD23F; --pink:#FF5C8A; --mint:#3DDC97;
+  --sky:#4CC9F0; --cream:#FFF6E0; --ink:#1A0B3A; --orange:#FF8E3C;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --grape:#22104A; --grape-2:#33196B; } }
+:root[data-theme="dark"]{ --grape:#22104A; --grape-2:#33196B; }
+*,*::before,*::after{box-sizing:inherit}
+html{height:100%; scroll-padding-top:env(safe-area-inset-top,0px)}
+body{
+  margin:0; min-height:100%; color:var(--cream); font-family:"Nunito",system-ui,sans-serif; font-weight:800;
+  background:var(--grape);
+  background-image:radial-gradient(circle at 15% 10%, rgba(255,92,138,.25) 0 120px, transparent 121px),
+                   radial-gradient(circle at 90% 30%, rgba(76,201,240,.22) 0 90px, transparent 91px),
+                   radial-gradient(circle at 20% 85%, rgba(61,220,151,.18) 0 140px, transparent 141px);
+  background-attachment:fixed;
+}
+main{max-width:520px; margin:0 auto; padding:20px 18px 40px; text-align:center}
+h1,h2,.display{font-family:"Lilita One","Arial Rounded MT Bold",system-ui,sans-serif; font-weight:400; margin:0}
+.logo{font-size:clamp(56px,17vw,92px); line-height:.95; color:var(--sun); letter-spacing:1px;
+  text-shadow:0 5px 0 var(--pink), 0 10px 0 var(--ink); transform:rotate(-4deg); margin:18px 0 6px}
+.tag{color:var(--sky); font-size:18px; margin:14px 0 26px}
+h2{font-size:32px; color:var(--sun); margin:6px 0 14px; text-shadow:0 3px 0 var(--ink)}
+p{line-height:1.5; margin:8px 0}
+.btn{
+  display:block; width:100%; border:0; cursor:pointer; font:inherit; font-family:"Lilita One",system-ui,sans-serif;
+  font-size:26px; padding:16px 18px; border-radius:22px; color:var(--ink); background:var(--sun);
+  box-shadow:0 7px 0 var(--ink); margin:14px 0; transition:transform .08s, box-shadow .08s;
+}
+.btn:active{transform:translateY(5px); box-shadow:0 2px 0 var(--ink)}
+.btn.pink{background:var(--pink); color:var(--cream)}
+.btn.mint{background:var(--mint)}
+.btn.sky{background:var(--sky)}
+.btn.ghost{background:transparent; color:var(--cream); box-shadow:none; font-size:18px; font-family:"Nunito",sans-serif; text-decoration:underline; padding:8px}
+.btn:disabled{opacity:.45; cursor:not-allowed}
+:focus-visible{outline:4px solid var(--sky); outline-offset:3px}
+.panel{background:var(--grape-2); border:4px solid var(--ink); border-radius:26px; padding:18px; margin:16px 0; box-shadow:0 8px 0 var(--ink)}
+.rules{text-align:left; font-size:17px}
+.rules ol{padding-left:22px; margin:6px 0} .rules li{margin:6px 0}
+.stepper{display:flex; align-items:center; justify-content:center; gap:18px}
+.stepper button{width:64px; height:64px; border-radius:50%; font-size:34px; padding:0; margin:0; display:grid; place-items:center}
+.count{font-family:"Lilita One",sans-serif; font-size:64px; min-width:90px; color:var(--sun)}
+.chips{display:flex; flex-wrap:wrap; gap:10px; justify-content:center}
+.chip{border:3px solid var(--ink); background:var(--cream); color:var(--ink); font:inherit; font-size:17px; padding:10px 14px; border-radius:999px; cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--pink); color:var(--cream); transform:scale(1.06)}
+.code{font-family:"Lilita One",sans-serif; font-size:clamp(60px,20vw,96px); letter-spacing:10px; color:var(--ink);
+  background:var(--sun); border-radius:22px; padding:6px 10px 2px 20px; display:inline-block; box-shadow:0 7px 0 var(--ink); margin:6px 0 10px}
+.cat{font-family:"Lilita One",sans-serif; font-size:30px; color:var(--mint)}
+.wheel-wrap{position:relative; width:min(330px,82vw); margin:18px auto 6px}
+.wheel-wrap svg{width:100%; height:auto; display:block; filter:drop-shadow(0 8px 0 var(--ink))}
+#wheel{transform-origin:50% 50%; transition:transform 4.2s cubic-bezier(.12,.75,.12,1)}
+.pointer{position:absolute; left:50%; top:-14px; transform:translateX(-50%); width:0; height:0;
+  border-left:20px solid transparent; border-right:20px solid transparent; border-top:34px solid var(--cream);
+  filter:drop-shadow(0 4px 0 var(--ink)); z-index:2}
+.big-msg{font-family:"Lilita One",sans-serif; font-size:30px; color:var(--sun); min-height:40px; margin:8px 0}
+.reveal-word{font-family:"Lilita One",sans-serif; font-size:44px; color:var(--cream)}
+input.codein{width:100%; font-family:"Lilita One",sans-serif; font-size:56px; text-align:center; letter-spacing:12px;
+  text-transform:uppercase; border:4px solid var(--ink); border-radius:22px; padding:8px; background:var(--cream); color:var(--ink)}
+.seats{display:grid; grid-template-columns:repeat(4,1fr); gap:10px}
+.seat{font-family:"Lilita One",sans-serif; font-size:30px; aspect-ratio:1; border-radius:18px; border:4px solid var(--ink);
+  background:var(--sky); color:var(--ink); cursor:pointer}
+.seat[aria-pressed="true"]{background:var(--sun); transform:scale(1.08)}
+.err{color:var(--pink); min-height:24px}
+.card{border-radius:28px; border:5px solid var(--ink); padding:26px 18px; box-shadow:0 10px 0 var(--ink); margin:18px 0}
+.card.crew{background:var(--mint); color:var(--ink)}
+.card.imp{background:var(--pink); color:var(--cream)}
+.card .small{font-size:18px}
+.card .word{font-family:"Lilita One",sans-serif; font-size:clamp(44px,13vw,64px); line-height:1.05; margin:10px 0}
+.hidden{display:none !important}
+.note{font-size:15px; opacity:.85}
+.revnum{font-family:"Lilita One",sans-serif; font-size:72px; color:var(--ink); background:var(--cream); border-radius:20px; display:inline-block; padding:0 22px; box-shadow:0 6px 0 var(--ink); margin:6px 0}
+.overlay{position:fixed; inset:0; z-index:50; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;
+  padding:calc(24px + env(safe-area-inset-top,0px)) 24px calc(24px + env(safe-area-inset-bottom,0px)); animation:pop .5s ease-out}
+.overlay.good{background:#1FBF6A; color:#08311B}
+.overlay.bad{background:#E5263E; color:#FFF6E0}
+.overlay.sneaky{background:#7B3FE4; color:#FFF6E0}
+.overlay .huge{font-family:"Lilita One",sans-serif; font-size:clamp(56px,18vw,110px); line-height:1; margin:10px 0}
+.overlay p{font-size:22px; max-width:420px}
+.overlay .btn{max-width:360px}
+@keyframes pop{0%{transform:scale(.6);opacity:0}70%{transform:scale(1.05);opacity:1}100%{transform:scale(1)}}
+@media (prefers-reduced-motion: reduce){ .overlay{animation:none} }
+@media (prefers-reduced-motion: reduce){ #wheel{transition-duration:.6s} .btn,.chip,.seat{transition:none} }
+.namein{width:100%; font:inherit; font-size:26px; text-align:center; border:4px solid var(--ink); border-radius:18px; padding:10px; background:var(--cream); color:var(--ink); margin:6px 0}
+.qr{background:var(--cream); border:4px solid var(--ink); border-radius:20px; padding:12px; display:inline-block; box-shadow:0 6px 0 var(--ink)}
+.qr img,.qr canvas{display:block; width:200px; height:200px}
+.plist{display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin:6px 0}
+.pchip{border:3px solid var(--ink); background:var(--sky); color:var(--ink); border-radius:999px; padding:8px 14px; font-size:18px; font:inherit}
+.pchip.me{background:var(--sun)}
+.pchip.away{opacity:.45}
+button.pchip{cursor:pointer}
+.status{color:var(--sky); min-height:24px}
+.banner{position:fixed; left:0; right:0; top:0; z-index:40; background:var(--pink); color:var(--cream); padding:calc(8px + env(safe-area-inset-top,0px)) 12px 8px; font-size:16px}
+.cardbtn{min-height:160px; font-size:30px}
+.vlist{display:grid; gap:10px}
+.vbtn{display:flex; align-items:center; justify-content:space-between; gap:10px; width:100%; border:4px solid var(--ink); border-radius:18px;
+  background:var(--cream); color:var(--ink); font:inherit; font-size:24px; padding:12px 16px; cursor:pointer; text-align:left}
+.vbtn[aria-pressed="true"]{background:var(--sun); transform:scale(1.03)}
+.vbtn.imp{background:var(--pink); color:var(--cream)}
+.badge{font-family:"Lilita One",sans-serif; min-width:48px; text-align:center; background:var(--grape); color:var(--sun); border-radius:999px; padding:4px 10px; font-size:22px}
+.hostbox{border-style:dashed}
+.pulse{animation:pulse 1s ease-in-out infinite alternate}
+@keyframes pulse{to{transform:scale(1.04)}}
+.countdown{font-family:"Lilita One",sans-serif; font-size:160px; color:var(--sun)}
+.overlay.wait{background:var(--grape)}
+@media (prefers-reduced-motion: reduce){ .pulse{animation:none} }
+</style>
+</head>
+<body>
+<div id="banner" class="banner hidden" role="status"></div>
+<main>
+
+<section id="home">
+  <div class="logo">Imposter!</div>
+  <p class="tag">Everyone gets the secret word… except the imposter.</p>
+  <button class="btn" id="goHost">Host the game</button>
+  <button class="btn sky" id="goJoin">Join as a player</button>
+  <div class="panel rules">
+    <h2 style="font-size:26px">How to play</h2>
+    <ol>
+      <li>One person taps <b>Host the game</b>. Their phone or tablet runs the game, and they play too.</li>
+      <li>Everyone else scans the QR code, types their name and taps <b>Join</b>.</li>
+      <li>Everyone sees the category. Everyone except the imposter sees the secret word.</li>
+      <li>Go around the circle twice. Each player says one clue word per turn, so that's 2 clue words each.</li>
+      <li>Vote for who you think the imposter is. Then the host taps <b>Big reveal</b>!</li>
+    </ol>
+  </div>
+</section>
+
+<section id="hostStart" class="hidden">
+  <h2>Host a game</h2>
+  <div class="panel">
+    <label for="hostName"><p>Your name</p></label>
+    <input class="namein" id="hostName" maxlength="12" autocomplete="off">
+    <p class="err" id="hostErr" aria-live="polite"></p>
+  </div>
+  <button class="btn mint" id="createGame">Create game</button>
+  <button class="btn ghost" data-home>Back</button>
+</section>
+
+<section id="joinStart" class="hidden">
+  <h2>Join a game</h2>
+  <div class="panel">
+    <label for="roomIn"><p>Game code</p></label>
+    <input class="codein" id="roomIn" maxlength="4" autocomplete="off" autocapitalize="characters" spellcheck="false">
+    <label for="joinName"><p>Your name</p></label>
+    <input class="namein" id="joinName" maxlength="12" autocomplete="off">
+    <p class="err" id="joinErr" aria-live="polite"></p>
+  </div>
+  <button class="btn mint" id="joinBtn">Join</button>
+  <button class="btn ghost" data-home>Back</button>
+</section>
+
+<section id="connecting" class="hidden">
+  <h2>Connecting…</h2>
+  <p class="status" id="connMsg">Finding the game</p>
+  <button class="btn ghost" data-home>Cancel</button>
+</section>
+
+<section id="lobby" class="hidden">
+  <div id="lobbyHost" class="hidden">
+    <p>Scan to join, or type the game code</p>
+    <div class="qr" id="qr"></div>
+    <div><div class="code" id="roomShow">----</div></div>
+    <p class="note" id="joinLink"></p>
+    <p class="err" id="qrWarn"></p>
+    <button class="btn sky" id="shareBtn">Share game link</button>
+  </div>
+  <div id="lobbyPlayer" class="hidden">
+    <h2 id="youreIn"></h2>
+    <p>Waiting for the host to start the game…</p>
+  </div>
+  <div class="panel">
+    <p id="joinedCount"></p>
+    <div class="plist" id="plist"></div>
+    <p class="note hidden" id="removeNote">Host: tap a name to remove that player.</p>
+  </div>
+  <div id="lobbyCtl" class="hidden">
+    <div class="panel hostbox">
+      <p>Pick a category</p>
+      <div class="chips" id="chips"></div>
+    </div>
+    <button class="btn mint" id="startBtn">Start game</button>
+    <p class="note" id="startNote"></p>
+  </div>
+</section>
+
+<section id="round" class="hidden">
+  <p>Category</p>
+  <div class="cat" id="rCat"></div>
+  <button class="btn sky cardbtn" id="showCardBtn">Tap to see your card</button>
+  <div id="cardBox" class="hidden"></div>
+  <button class="btn hidden" id="hideCardBtn">Hide my card</button>
+  <div class="big-msg" id="firstMsg" aria-live="polite"></div>
+  <div id="roundCtl" class="hidden">
+    <div class="wheel-wrap"><div class="pointer"></div><svg viewBox="0 0 300 300" aria-hidden="true"><g id="wheel"></g></svg></div>
+    <button class="btn sky" id="spinBtn">Spin: who goes first?</button>
+    <button class="btn pink" id="voteStartBtn">Choose imposter</button>
+  </div>
+</section>
+
+<section id="vote" class="hidden">
+  <h2>Who is the imposter?</h2>
+  <p id="voteInfo"></p>
+  <p class="big-msg" id="votedCount" aria-live="polite"></p>
+  <div class="vlist" id="vlist"></div>
+  <div id="voteCtl" class="hidden">
+    <button class="btn" id="revealBtn">Big reveal</button>
+  </div>
+</section>
+
+<section id="results" class="hidden">
+  <h2>Results</h2>
+  <div class="panel">
+    <p>The secret word was</p>
+    <div class="reveal-word" id="resWord"></div>
+    <p id="resImps"></p>
+  </div>
+  <p>Votes</p>
+  <div class="vlist" id="resList"></div>
+  <button class="btn sky" id="seeMine">See my result again</button>
+  <div id="resCtl" class="hidden"><button class="btn mint" id="againBtn">Play again</button></div>
+  <p class="note hidden" id="resWait">Waiting for the host to start the next round…</p>
+</section>
+
+<section id="waiting" class="hidden">
+  <h2>Round in progress</h2>
+  <p>You're in! You'll join the next round.</p>
+</section>
+
+<section id="ended" class="hidden">
+  <h2 id="endedMsg">Game over</h2>
+  <button class="btn" data-home>Back to start</button>
+</section>
+
+</main>
+<div id="overlay" class="overlay hidden" role="alert"></div>
+
+<script>
+(function(){
+"use strict";
+var CATS=[
+ {name:"Animals",emoji:"🐧",words:["Kiwi","Penguin","Elephant","Giraffe","Shark","Dolphin","Kangaroo","Octopus","Lion","Sloth","Cat","Dog","Horse","Panda","Crocodile","Owl","Frog","Bee","Butterfly","Snake","Tiger","Monkey","Zebra","Rabbit"]},
+ {name:"Food",emoji:"🍕",words:["Pizza","Pavlova","Sushi","Taco","Pancakes","Ice cream","Hot chips","Sausage sizzle","Apple","Banana","Popcorn","Spaghetti","Burger","Chocolate","Kiwifruit","Donut","Toast","Watermelon","Fish and chips","Cupcake","Strawberry","Pie"]},
+ {name:"Movies",emoji:"🎬",words:["Frozen","Toy Story","Finding Nemo","Shrek","Moana","Encanto","The Lion King","Minions","Cars","Zootopia","Coco","Inside Out","Kung Fu Panda","Up","Ratatouille","Madagascar","Paddington","The Incredibles","Big Hero 6","Ice Age","Home Alone","Jurassic Park"]},
+ {name:"Video games",emoji:"🎮",words:["Minecraft","Roblox","Mario Kart","Pokémon","Tetris","Pac-Man","Among Us","Animal Crossing","Sonic","Rocket League","Just Dance","Angry Birds","Subway Surfers","Splatoon","Kirby","Fortnite","Fall Guys","Stardew Valley"]},
+ {name:"Sports",emoji:"🏉",words:["Rugby","Netball","Soccer","Cricket","Basketball","Swimming","Tennis","Surfing","Skateboarding","Gymnastics","Hockey","Cycling","Golf","Volleyball","Karate","Skiing","Badminton","Rowing","Athletics","Bowling","Touch rugby"]},
+ {name:"Places",emoji:"🏖️",words:["Beach","Zoo","Library","Airport","Farm","Swimming pool","Supermarket","Museum","Volcano","Hospital","Playground","Cinema","Campground","Bakery","Space station","Castle","Jungle","Desert","Ice rink","Theme park","Island"]},
+ {name:"Jobs",emoji:"🚒",words:["Teacher","Doctor","Firefighter","Pilot","Chef","Farmer","Police officer","Vet","Builder","Astronaut","Dentist","Artist","Scientist","Bus driver","Nurse","Lifeguard","Baker","Zookeeper","YouTuber","Mechanic"]},
+ {name:"Around the house",emoji:"🛋️",words:["Fridge","Bed","Toothbrush","Couch","TV","Lamp","Washing machine","Bath","Pillow","Toaster","Remote control","Mirror","Clock","Umbrella","Stairs","Blanket","Microwave","Vacuum cleaner","Pot plant","Letterbox"]},
+ {name:"At school",emoji:"🎒",words:["Pencil","Ruler","Backpack","Whiteboard","Lunchbox","Calculator","Glue stick","Scissors","Desk","Principal","Assembly","School bell","Field trip","Crayons","Eraser","Homework","School bus","Library book","Sports day","Spelling test"]}
+];
+var COLORS=["#FFD23F","#FF5C8A","#3DDC97","#4CC9F0","#FF8E3C","#B388FF"];
+var ALPHA="ABCDEFGHJKLMNPRSTUVWXYZ";
+var PREFIX="nzc-imposter-v1-";
+var MAXP=12, MINP=3;
+
+var $=function(id){return document.getElementById(id);};
+function el(tag,props){var e=document.createElement(tag);if(props)for(var k in props){var v=props[k];
+  if(k==="class")e.className=v;else if(k==="text")e.textContent=v;else if(k.slice(0,2)==="on")e[k]=v;else e.setAttribute(k,v);}
+  for(var i=2;i<arguments.length;i++){var c=arguments[i];if(c!=null)e.append(c);}return e;}
+function store(k,v){try{localStorage.setItem(k,v);}catch(e){}}
+function load(k){try{return localStorage.getItem(k);}catch(e){return null;}}
+function rnd(n){return Math.floor(Math.random()*n);}
+function cleanName(s){return (s||"").replace(/\s+/g," ").trim().slice(0,12);}
+
+var SCREENS=["home","hostStart","joinStart","connecting","lobby","round","vote","results","waiting","ended"];
+function show(id){SCREENS.forEach(function(s){$(s).classList.toggle("hidden",s!==id);});}
+function banner(msg){$("banner").textContent=msg||"";$("banner").classList.toggle("hidden",!msg);}
+document.querySelectorAll("[data-home]").forEach(function(b){b.onclick=function(){location.href=location.pathname;};});
+
+var cid=load("imp_cid"); if(!cid){cid="c"+Math.random().toString(36).slice(2,10);store("imp_cid",cid);}
+var wakeLock=null;
+function keepAwake(){try{if(navigator.wakeLock&&document.visibilityState==="visible")navigator.wakeLock.request("screen").then(function(l){wakeLock=l;}).catch(function(){});}catch(e){}}
+document.addEventListener("visibilitychange",function(){if(document.visibilityState==="visible"){keepAwake();if(onVisible)onVisible();}});
+var onVisible=null;
+
+/* ================= HOST (the server) ================= */
+var H=null;
+function hostCreate(name){
+  H={code:"",peer:null,players:{},order:[],phase:"lobby",catChoice:-1,cat:null,word:null,imps:[],first:null,votes:{},used:{},round:0,conns:{}};
+  H.players.HOST={id:"HOST",name:name,connected:true,inRound:false};H.order.push("HOST");
+  tryOpen(0);
+}
+function tryOpen(attempt){
+  var code="";for(var i=0;i<4;i++)code+=ALPHA[rnd(ALPHA.length)];
+  H.code=code;show("connecting");$("connMsg").textContent="Setting up your game…";
+  var peer=new Peer(PREFIX+code);H.peer=peer;
+  peer.on("open",function(){
+    keepAwake();
+    window.addEventListener("beforeunload",function(e){if(H&&H.order.length>1){e.preventDefault();e.returnValue="";}});
+    hostBroadcast();
+  });
+  peer.on("connection",function(conn){
+    conn.on("data",function(m){hostHandle(conn,m);});
+    conn.on("close",function(){hostDrop(conn);});
+    conn.on("error",function(){hostDrop(conn);});
+  });
+  peer.on("disconnected",function(){try{peer.reconnect();}catch(e){}});
+  peer.on("error",function(err){
+    if(err&&err.type==="unavailable-id"&&attempt<5){peer.destroy();tryOpen(attempt+1);return;}
+    if(err&&err.type==="peer-unavailable")return;
+    if(!peer.open){show("ended");$("endedMsg").textContent="Couldn't start the game. Check the internet connection and try again.";}
+  });
+}
+function hostDrop(conn){
+  for(var id in H.conns){if(H.conns[id]===conn){delete H.conns[id];if(H.players[id])H.players[id].connected=false;}}
+  hostBroadcast();
+}
+function hostHandle(conn,m){
+  if(!m||typeof m!=="object")return;
+  if(m.t==="join"){
+    var id=String(m.cid||"").slice(0,20),name=cleanName(m.name);
+    if(!id||!name){conn.send({t:"error",msg:"Type your name first."});return;}
+    var p=H.players[id];
+    if(!p){
+      for(var k in H.players){if(H.players[k].name.toLowerCase()===name.toLowerCase()){conn.send({t:"error",msg:"Someone already has the name "+name+". Try adding a letter."});return;}}
+      if(H.order.length>=MAXP){conn.send({t:"error",msg:"The game is full (12 players)."});return;}
+      p={id:id,name:name,connected:true,inRound:false};H.players[id]=p;H.order.push(id);
+    }
+    if(H.conns[id]&&H.conns[id]!==conn){try{H.conns[id].close();}catch(e){}}
+    H.conns[id]=conn;p.connected=true;
+    hostBroadcast();return;
+  }
+  var pid=null;for(var c in H.conns){if(H.conns[c]===conn)pid=c;}
+  if(pid&&m.t==="vote")hostVote(pid,m.target);
+}
+function hostVote(pid,target){
+  if(H.phase!=="voting")return;
+  var p=H.players[pid],t=H.players[target];
+  if(!p||!p.inRound||!t||!t.inRound||pid===target)return;
+  H.votes[pid]=target;hostBroadcast();
+}
+function roster(){return H.order.filter(function(id){return H.players[id].inRound;});}
+function hostStart(){
+  var ids=H.order.filter(function(id){return H.players[id].connected;});
+  if(ids.length<MINP)return;
+  H.order.forEach(function(id){H.players[id].inRound=ids.indexOf(id)>=0;});
+  var cat=H.catChoice>=0?H.catChoice:rnd(CATS.length);
+  var fresh=CATS[cat].words.filter(function(w){return !H.used[cat+"|"+w];});
+  if(!fresh.length){CATS[cat].words.forEach(function(w){delete H.used[cat+"|"+w];});fresh=CATS[cat].words.slice();}
+  var word=fresh[rnd(fresh.length)];H.used[cat+"|"+word]=1;
+  var n=ids.length,p2=n<=3?0:(n<=5?0.25:0.5),ic=Math.random()<p2?2:1;
+  var sh=ids.slice();for(var j=sh.length-1;j>0;j--){var k=rnd(j+1);var t=sh[j];sh[j]=sh[k];sh[k]=t;}
+  H.cat=cat;H.word=word;H.imps=sh.slice(0,ic);H.first=null;H.votes={};H.phase="clues";H.round++;
+  hostBroadcast();
+}
+function hostSpin(cb){
+  var r=roster(),crew=r.filter(function(id){return H.imps.indexOf(id)<0;});
+  var pick=crew[rnd(crew.length)];
+  spinTo(r.indexOf(pick)+1,r.length,function(){H.first=pick;hostBroadcast();cb&&cb();});
+}
+function viewFor(id){
+  var p=H.players[id],r=roster(),inR=H.phase!=="lobby"&&p.inRound;
+  var v={t:"state",code:H.code,phase:H.phase,round:H.round,me:id,isHost:id==="HOST",
+    players:H.order.map(function(i){var q=H.players[i];return{id:i,name:q.name,connected:q.connected,host:i==="HOST"};}),
+    catChoice:H.catChoice,inRound:inR};
+  if(H.phase==="lobby")return v;
+  v.cat={name:CATS[H.cat].name,emoji:CATS[H.cat].emoji};
+  v.roster=r.map(function(i){return{id:i,name:H.players[i].name,connected:H.players[i].connected};});
+  v.maybeTwo=r.length>3;
+  v.first=H.first?H.players[H.first].name:null;
+  if(inR)v.card=H.imps.indexOf(id)>=0?{imp:true}:{word:H.word};
+  if(H.phase==="voting"||H.phase==="reveal"){
+    var counts={},voted=0,active=0;r.forEach(function(i){counts[i]=0;});
+    for(var vtr in H.votes){if(counts[H.votes[vtr]]!=null&&r.indexOf(vtr)>=0){counts[H.votes[vtr]]++;voted++;}}
+    r.forEach(function(i){if(H.players[i].connected||H.votes[i])active++;});
+    v.counts=counts;v.voted=voted;v.total=active;v.myVote=H.votes[id]||null;
+  }
+  if(H.phase==="reveal"){v.reveal={imps:H.imps.slice(),impNames:H.imps.map(function(i){return H.players[i].name;}),word:H.word};}
+  return v;
+}
+function hostBroadcast(){
+  for(var id in H.conns){try{H.conns[id].send(viewFor(id));}catch(e){}}
+  render(viewFor("HOST"));
+}
+function hostRemove(id){
+  if(id==="HOST"||H.phase!=="lobby")return;
+  if(!confirm("Remove "+H.players[id].name+" from the game?"))return;
+  if(H.conns[id]){try{H.conns[id].send({t:"kicked"});}catch(e){}var c=H.conns[id];setTimeout(function(){try{c.close();}catch(e){}},300);delete H.conns[id];}
+  delete H.players[id];H.order=H.order.filter(function(x){return x!==id;});hostBroadcast();
+}
+
+/* ================= PLAYER (client) ================= */
+var P=null;
+function playerJoin(code,name){
+  P={code:code,name:name,peer:null,conn:null,kicked:false,joined:false,retry:null};
+  show("connecting");$("connMsg").textContent="Finding game "+code+"…";
+  var peer=new Peer();P.peer=peer;
+  peer.on("open",function(){connect();});
+  peer.on("disconnected",function(){try{peer.reconnect();}catch(e){}});
+  peer.on("error",function(err){
+    if(err&&err.type==="peer-unavailable"){
+      if(!P.joined){joinFail("Can't find game "+code+". Check the code on the host's screen.");}
+      else{banner("Lost the host. Trying again…");scheduleRetry();}
+      return;
+    }
+    if(!P.joined)joinFail("Couldn't connect. Check the internet and try again.");
+  });
+  onVisible=function(){if(P&&P.joined&&!(P.conn&&P.conn.open))connect();};
+}
+function joinFail(msg){show("joinStart");$("joinErr").textContent=msg;try{P.peer.destroy();}catch(e){}P=null;}
+function scheduleRetry(){if(!P||P.kicked)return;clearTimeout(P.retry);P.retry=setTimeout(connect,3000);}
+function connect(){
+  if(!P||P.kicked)return;
+  if(P.peer.disconnected){try{P.peer.reconnect();}catch(e){}}
+  var conn=P.peer.connect(PREFIX+P.code,{reliable:true});P.conn=conn;
+  conn.on("open",function(){conn.send({t:"join",cid:cid,name:P.name});});
+  conn.on("data",function(m){
+    if(!m)return;
+    if(m.t==="error"){if(!P.joined)joinFail(m.msg);return;}
+    if(m.t==="kicked"){P.kicked=true;show("ended");$("endedMsg").textContent="The host removed you from the game.";return;}
+    if(m.t==="state"){P.joined=true;store("imp_last",JSON.stringify({code:P.code,name:P.name}));banner("");render(m);}
+  });
+  conn.on("close",function(){if(P&&P.joined&&!P.kicked){banner("Lost the host. Reconnecting…");scheduleRetry();}});
+}
+function send(m){
+  if(H){if(m.t==="vote")hostVote("HOST",m.target);return;}
+  if(P&&P.conn&&P.conn.open)P.conn.send(m);
+}
+
+/* ================= SHARED UI ================= */
+var lastRound=-1,cardShown=false,overlayDone=-1,qrMade=false,V=null;
+function render(v){
+  V=v;
+  if(v.round!==lastRound){lastRound=v.round;cardShown=false;}
+  if(v.phase==="lobby"){renderLobby(v);show("lobby");return;}
+  if(!v.inRound){show("waiting");return;}
+  if(v.phase==="clues"){renderRound(v);show("round");}
+  else if(v.phase==="voting"){renderVote(v);show("vote");}
+  else if(v.phase==="reveal"){renderResults(v);show("results");if(overlayDone!==v.round){overlayDone=v.round;playReveal(v);}}
+}
+function renderLobby(v){
+  $("lobbyHost").classList.toggle("hidden",!v.isHost);
+  $("lobbyCtl").classList.toggle("hidden",!v.isHost);
+  $("removeNote").classList.toggle("hidden",!v.isHost||v.players.length<2);
+  $("lobbyPlayer").classList.toggle("hidden",v.isHost);
+  var me=v.players.filter(function(p){return p.id===v.me;})[0];
+  $("youreIn").textContent="You're in, "+(me?me.name:"")+"!";
+  var on=v.players.filter(function(p){return p.connected;}).length;
+  $("joinedCount").textContent=on+" of "+MAXP+" players in the game";
+  var box=$("plist");box.innerHTML="";
+  v.players.forEach(function(p){
+    var label=p.name+(p.id===v.me?" (you)":"")+(p.host?" 👑":"")+(p.connected?"":" (away)");
+    var cls="pchip"+(p.id===v.me?" me":"")+(p.connected?"":" away");
+    var chip=v.isHost&&!p.host?el("button",{class:cls,text:label,onclick:function(){hostRemove(p.id);}}):el("span",{class:cls,text:label});
+    box.append(chip);
+  });
+  if(v.isHost){
+    $("roomShow").textContent=v.code;
+    if(!qrMade){qrMade=true;var url=joinUrl(v.code);$("joinLink").textContent=url;
+      if(!/^https?:/.test(location.protocol)){$("qrWarn").textContent="This copy isn't opened from a web link, so the QR code won't work on phones. Open the game from its github.io link instead.";$("qr").classList.add("hidden");}
+      else if(window.QRCode){new QRCode($("qr"),{text:url,width:200,height:200,colorDark:"#1A0B3A",colorLight:"#FFF6E0",correctLevel:QRCode.CorrectLevel.M});}
+      else{$("qr").classList.add("hidden");$("qrWarn").textContent="The QR code couldn't load. Players can type the game code instead.";}}
+    var chips=$("chips");chips.innerHTML="";
+    [{i:-1,label:"🎲 Surprise me"}].concat(CATS.map(function(c,i){return{i:i,label:c.emoji+" "+c.name};})).forEach(function(o){
+      chips.append(el("button",{class:"chip",text:o.label,"aria-pressed":String(o.i===H.catChoice),onclick:function(){H.catChoice=o.i;renderLobby(viewFor("HOST"));}}));
+    });
+    $("startBtn").disabled=on<MINP;
+    $("startNote").textContent=on<MINP?"You need at least "+MINP+" players, including you.":"Tap Start when everyone has joined.";
+  }
+}
+function cardEl(v){
+  var extra=v.maybeTwo?el("p",{class:"small",text:"There could be 1 or 2 imposters this round."}):null;
+  if(v.card.imp)return el("div",{class:"card imp"},el("p",{class:"small",text:v.cat.emoji+" "+v.cat.name}),el("div",{class:"word",text:"You're the imposter!"}),
+    el("p",{class:"small",text:"You don't know the word. Listen to the clues and blend in. You will still say 2 clue words!"}),extra);
+  return el("div",{class:"card crew"},el("p",{class:"small",text:v.cat.emoji+" "+v.cat.name}),el("p",{class:"small",text:"The secret word is"}),el("div",{class:"word",text:v.card.word}),
+    el("p",{class:"small",text:"You will say 2 clue words, one on each of your turns. Not too easy!"}),extra);
+}
+function renderRound(v){
+  $("rCat").textContent=v.cat.emoji+" "+v.cat.name;
+  var box=$("cardBox");box.innerHTML="";box.append(cardEl(v));
+  box.classList.toggle("hidden",!cardShown);$("hideCardBtn").classList.toggle("hidden",!cardShown);$("showCardBtn").classList.toggle("hidden",cardShown);
+  $("firstMsg").textContent=v.first?v.first+" gives the first clue! Go around twice: 2 clue words each.":(v.isHost?"":"Waiting for the host to spin the wheel…");
+  $("roundCtl").classList.toggle("hidden",!v.isHost);
+  if(v.isHost&&!spinning){drawWheel(v.roster.map(function(r){return r.name;}));$("spinBtn").disabled=!!v.first;}
+}
+$("startBtn").onclick=function(){if(H)hostStart();};
+$("showCardBtn").onclick=function(){cardShown=true;render(V);};
+$("hideCardBtn").onclick=function(){cardShown=false;render(V);};
+var spinning=false;
+$("spinBtn").onclick=function(){spinning=true;this.disabled=true;$("voteStartBtn").disabled=true;$("firstMsg").textContent="Spinning…";
+  hostSpin(function(){spinning=false;$("voteStartBtn").disabled=false;});};
+$("voteStartBtn").onclick=function(){if(!H)return;H.phase="voting";H.votes={};hostBroadcast();};
+
+function renderVote(v){
+  $("voteInfo").textContent="Tap a name. You can change your vote until the big reveal.";
+  $("votedCount").textContent=v.voted+" of "+v.total+" voted";
+  var list=$("vlist");list.innerHTML="";
+  v.roster.forEach(function(r){
+    if(r.id===v.me)return;
+    var n=v.counts[r.id]||0;
+    list.append(el("button",{class:"vbtn","aria-pressed":String(v.myVote===r.id),"aria-label":r.name+", "+n+(n===1?" vote":" votes"),onclick:function(){send({t:"vote",target:r.id});}},
+      el("span",{text:r.name}),el("span",{class:"badge",text:"🗳️ "+n})));
+  });
+  var mine=v.counts[v.me]||0;
+  list.append(el("p",{class:"note",text:"Votes for you: "+mine}));
+  $("voteCtl").classList.toggle("hidden",!v.isHost);
+  if(v.isHost){var all=v.voted>=v.total&&v.total>0;$("revealBtn").textContent=all?"Everyone voted! Big reveal":"Big reveal";$("revealBtn").classList.toggle("pulse",all);}
+}
+$("revealBtn").onclick=function(){
+  if(!H)return;var v=viewFor("HOST");
+  if(v.voted<v.total&&!confirm("Not everyone has voted yet. Reveal anyway?"))return;
+  H.phase="reveal";hostBroadcast();
+};
+
+function resultFor(v){
+  var isImp=v.reveal.imps.indexOf(v.me)>=0,right=v.myVote&&v.reveal.imps.indexOf(v.myVote)>=0;
+  var who=v.reveal.impNames.length===1?v.reveal.impNames[0]+" was the imposter!":v.reveal.impNames.join(" and ")+" were the imposters!";
+  if(isImp){var caught=(v.counts[v.me]||0);return{cls:"sneaky",big:"Sneaky!",msg:"You were the imposter! "+caught+(caught===1?" person":" people")+" voted for you."+(v.reveal.imps.length>1?" "+who:"")};}
+  if(right)return{cls:"good",big:"Correct!",msg:who+" Great detective work!"};
+  return{cls:"bad",big:"Wrong!",msg:(v.myVote?"Not quite. ":"You didn't vote. ")+who};
+}
+function playReveal(v){
+  var o=$("overlay");o.className="overlay wait";o.innerHTML="";
+  var n=el("div",{class:"countdown",text:"3"});o.append(el("p",{text:"And the imposter is…"}),n);
+  var c=3;var iv=setInterval(function(){c--;if(c>0){n.textContent=String(c);return;}clearInterval(iv);showResult(v);},800);
+}
+function showResult(v){
+  var r=resultFor(v),o=$("overlay");o.className="overlay "+r.cls;o.innerHTML="";
+  o.append(el("div",{class:"huge",text:r.big}),el("p",{text:r.msg}),el("p",{},"The word was ",el("b",{text:v.reveal.word})),
+    el("button",{class:"btn",text:"See the votes",onclick:function(){o.className="overlay hidden";}}));
+}
+$("seeMine").onclick=function(){if(V&&V.reveal)showResult(V);};
+function renderResults(v){
+  $("resWord").textContent=v.reveal.word;
+  $("resImps").textContent=v.reveal.impNames.length===1?"Imposter: "+v.reveal.impNames[0]:"Imposters: "+v.reveal.impNames.join(" and ");
+  var list=$("resList");list.innerHTML="";
+  v.roster.slice().sort(function(a,b){return (v.counts[b.id]||0)-(v.counts[a.id]||0);}).forEach(function(r){
+    var isImp=v.reveal.imps.indexOf(r.id)>=0,n=v.counts[r.id]||0;
+    list.append(el("div",{class:"vbtn"+(isImp?" imp":"")},el("span",{text:r.name+(isImp?" 🕵️":"")}),el("span",{class:"badge",text:"🗳️ "+n})));
+  });
+  $("resCtl").classList.toggle("hidden",!v.isHost);$("resWait").classList.toggle("hidden",v.isHost);
+}
+$("againBtn").onclick=function(){if(!H)return;H.phase="lobby";H.votes={};H.first=null;H.order.forEach(function(id){H.players[id].inRound=false;});hostBroadcast();};
+
+/* wheel (host screen) */
+var rot=0;
+function drawWheel(names){
+  var g=$("wheel"),cx=150,cy=150,r=140,n=names.length,html="";
+  for(var i=0;i<n;i++){
+    var a0=i/n*2*Math.PI,a1=(i+1)/n*2*Math.PI,am=(a0+a1)/2;
+    var x0=cx+r*Math.sin(a0),y0=cy-r*Math.cos(a0),x1=cx+r*Math.sin(a1),y1=cy-r*Math.cos(a1);
+    var fill=COLORS[i%COLORS.length];if(n%COLORS.length===1&&i===n-1)fill=COLORS[2];
+    html+='<path d="M150 150 L'+x0.toFixed(2)+' '+y0.toFixed(2)+' A140 140 0 '+((a1-a0)>Math.PI?1:0)+' 1 '+x1.toFixed(2)+' '+y1.toFixed(2)+' Z" fill="'+fill+'" stroke="#1A0B3A" stroke-width="4"/>';
+  }
+  g.innerHTML=html+'<circle cx="150" cy="150" r="26" fill="#FFF6E0" stroke="#1A0B3A" stroke-width="5"/>';
+  for(var j=0;j<n;j++){
+    var am2=(j+0.5)/n*2*Math.PI,deg=am2*180/Math.PI-90,tx=cx+r*0.6*Math.sin(am2),ty=cy-r*0.6*Math.cos(am2);
+    var t=document.createElementNS("http://www.w3.org/2000/svg","text");
+    t.setAttribute("x",tx.toFixed(1));t.setAttribute("y",ty.toFixed(1));t.setAttribute("text-anchor","middle");t.setAttribute("dominant-baseline","central");
+    t.setAttribute("font-family","Lilita One, sans-serif");t.setAttribute("font-size",n>8?"15":"19");t.setAttribute("fill","#1A0B3A");
+    t.setAttribute("transform","rotate("+deg.toFixed(1)+" "+tx.toFixed(1)+" "+ty.toFixed(1)+")");
+    var nm=names[j];t.textContent=nm.length>9?nm.slice(0,8)+"…":nm;g.appendChild(t);
+  }
+}
+function spinTo(seat,n,cb){
+  var center=(seat-0.5)/n*360;
+  rot=rot+360*5+((360-center)-(rot%360)+360)%360;
+  var w=$("wheel");w.style.transform="rotate("+rot+"deg)";
+  var done=false;function fin(){if(done)return;done=true;cb&&cb();}
+  w.addEventListener("transitionend",fin,{once:true});setTimeout(fin,4700);
+}
+
+function joinUrl(code){return location.origin+location.pathname.replace(/index\.html$/,"")+"?room="+code;}
+$("shareBtn").onclick=function(){
+  if(!H)return;var url=joinUrl(H.code);
+  if(navigator.share){navigator.share({title:"Imposter!",text:"Join my Imposter game! Code: "+H.code,url:url}).catch(function(){});return;}
+  if(navigator.clipboard){navigator.clipboard.writeText(url).then(function(){$("shareBtn").textContent="Link copied!";}).catch(function(){});}
+};
+if("serviceWorker" in navigator&&/^https?:/.test(location.protocol)){window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){});});}
+/* ================= START SCREENS ================= */
+var last={};try{last=JSON.parse(load("imp_last")||"{}");}catch(e){}
+$("goHost").onclick=function(){$("hostName").value=load("imp_name")||"";show("hostStart");$("hostName").focus();};
+$("goJoin").onclick=function(){openJoin("");};
+function openJoin(code){$("roomIn").value=code||"";$("joinName").value=load("imp_name")||"";$("joinErr").textContent="";show("joinStart");
+  (code?$("joinName"):$("roomIn")).focus();}
+$("createGame").onclick=function(){
+  var n=cleanName($("hostName").value);if(!n){$("hostErr").textContent="Type your name first.";return;}
+  if(!window.Peer){$("hostErr").textContent="The game couldn't load. Check the internet and refresh.";return;}
+  store("imp_name",n);hostCreate(n);
+};
+$("roomIn").addEventListener("input",function(){this.value=this.value.toUpperCase().replace(/[^A-Z]/g,"").slice(0,4);});
+$("joinBtn").onclick=function(){
+  var code=$("roomIn").value,n=cleanName($("joinName").value);
+  if(code.length!==4){$("joinErr").textContent="The game code has 4 letters.";return;}
+  if(!n){$("joinErr").textContent="Type your name first.";return;}
+  if(!window.Peer){$("joinErr").textContent="The game couldn't load. Check the internet and refresh.";return;}
+  store("imp_name",n);keepAwake();playerJoin(code,n);
+};
+var qs=new URLSearchParams(location.search).get("room");
+if(qs){qs=qs.toUpperCase().replace(/[^A-Z]/g,"").slice(0,4);openJoin(qs);}
+
+window.__imp={get H(){return H;},get P(){return P;},viewFor:function(id){return viewFor(id);}};
+})();
+
+</script>
+</body>
+</html>
