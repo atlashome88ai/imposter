@@ -93,6 +93,7 @@ input.codein{width:100%; font-family:"Lilita One",sans-serif; font-size:56px; te
 .overlay.good{background:#1FBF6A; color:#08311B}
 .overlay.bad{background:#E5263E; color:#FFF6E0}
 .overlay.sneaky{background:#7B3FE4; color:#FFF6E0}
+.overlay.close{background:#FF8E3C; color:#1A0B3A}
 .overlay .huge{font-family:"Lilita One",sans-serif; font-size:clamp(56px,18vw,110px); line-height:1; margin:10px 0}
 .overlay p{font-size:22px; max-width:420px}
 .overlay .btn{max-width:360px}
@@ -140,7 +141,7 @@ button.pchip{cursor:pointer}
       <li>Everyone else scans the QR code, types their name and taps <b>Join</b>.</li>
       <li>Everyone sees the category. Everyone except the imposter sees the secret word.</li>
       <li>Go around the circle twice. Each player says one clue word per turn, so that's 2 clue words each.</li>
-      <li>Vote for who you think the imposter is. Then the host taps <b>Big reveal</b>!</li>
+      <li>Vote for who you think the imposter is. Pick 2 names if you think there are 2 imposters. Then the host taps <b>Big reveal</b>!</li>
     </ol>
   </div>
 </section>
@@ -347,9 +348,12 @@ function hostVote(pid,target){
   if(H.phase!=="voting")return;
   var p=H.players[pid],t=H.players[target];
   if(!p||!p.inRound||!t||!t.inRound||pid===target)return;
-  H.votes[pid]=target;hostBroadcast();
+  var mine=(H.votes[pid]||[]).slice(),at=mine.indexOf(target);
+  if(at>=0)mine.splice(at,1);else if(mine.length<maxPicks())mine.push(target);else return;
+  if(mine.length)H.votes[pid]=mine;else delete H.votes[pid];hostBroadcast();
 }
 function roster(){return H.order.filter(function(id){return H.players[id].inRound;});}
+function maxPicks(){return roster().length>3?2:1;}
 function hostStart(){
   var ids=H.order.filter(function(id){return H.players[id].connected;});
   if(ids.length<MINP)return;
@@ -381,9 +385,9 @@ function viewFor(id){
   if(inR)v.card=H.imps.indexOf(id)>=0?{imp:true}:{word:H.word};
   if(H.phase==="voting"||H.phase==="reveal"){
     var counts={},voted=0,active=0;r.forEach(function(i){counts[i]=0;});
-    for(var vtr in H.votes){if(counts[H.votes[vtr]]!=null&&r.indexOf(vtr)>=0){counts[H.votes[vtr]]++;voted++;}}
+    for(var vtr in H.votes){if(r.indexOf(vtr)<0)continue;voted++;H.votes[vtr].forEach(function(tg){if(counts[tg]!=null)counts[tg]++;});}
     r.forEach(function(i){if(H.players[i].connected||H.votes[i])active++;});
-    v.counts=counts;v.voted=voted;v.total=active;v.myVote=H.votes[id]||null;
+    v.counts=counts;v.voted=voted;v.total=active;v.myVotes=(H.votes[id]||[]).slice();v.maxPicks=maxPicks();
   }
   if(H.phase==="reveal"){v.reveal={imps:H.imps.slice(),impNames:H.imps.map(function(i){return H.players[i].name;}),word:H.word};}
   return v;
@@ -502,16 +506,17 @@ $("spinBtn").onclick=function(){spinning=true;this.disabled=true;$("voteStartBtn
 $("voteStartBtn").onclick=function(){if(!H)return;H.phase="voting";H.votes={};hostBroadcast();};
 
 function renderVote(v){
-  $("voteInfo").textContent="Tap a name. You can change your vote until the big reveal.";
+  $("voteInfo").textContent=v.maxPicks>1?"Tap 1 or 2 names. Pick 2 if you think there are 2 imposters. Tap a name again to unpick it.":"Tap a name. You can change your vote until the big reveal.";
   $("votedCount").textContent=v.voted+" of "+v.total+" voted";
   var list=$("vlist");list.innerHTML="";
   v.roster.forEach(function(r){
     if(r.id===v.me)return;
     var n=v.counts[r.id]||0;
-    list.append(el("button",{class:"vbtn","aria-pressed":String(v.myVote===r.id),"aria-label":r.name+", "+n+(n===1?" vote":" votes"),onclick:function(){send({t:"vote",target:r.id});}},
+    list.append(el("button",{class:"vbtn","aria-pressed":String(v.myVotes.indexOf(r.id)>=0),"aria-label":r.name+", "+n+(n===1?" vote":" votes"),onclick:function(){send({t:"vote",target:r.id});}},
       el("span",{text:r.name}),el("span",{class:"badge",text:"🗳️ "+n})));
   });
   var mine=v.counts[v.me]||0;
+  if(v.maxPicks>1&&v.myVotes.length>=v.maxPicks)list.append(el("p",{class:"note",text:"You've picked 2. Tap one to unpick it if you change your mind."}));
   list.append(el("p",{class:"note",text:"Votes for you: "+mine}));
   $("voteCtl").classList.toggle("hidden",!v.isHost);
   if(v.isHost){var all=v.voted>=v.total&&v.total>0;$("revealBtn").textContent=all?"Everyone voted! Big reveal":"Big reveal";$("revealBtn").classList.toggle("pulse",all);}
@@ -523,11 +528,12 @@ $("revealBtn").onclick=function(){
 };
 
 function resultFor(v){
-  var isImp=v.reveal.imps.indexOf(v.me)>=0,right=v.myVote&&v.reveal.imps.indexOf(v.myVote)>=0;
+  var isImp=v.reveal.imps.indexOf(v.me)>=0,picks=v.myVotes||[],hits=picks.filter(function(x){return v.reveal.imps.indexOf(x)>=0;}).length,wrong=picks.length-hits;
   var who=v.reveal.impNames.length===1?v.reveal.impNames[0]+" was the imposter!":v.reveal.impNames.join(" and ")+" were the imposters!";
   if(isImp){var caught=(v.counts[v.me]||0);return{cls:"sneaky",big:"Sneaky!",msg:"You were the imposter! "+caught+(caught===1?" person":" people")+" voted for you."+(v.reveal.imps.length>1?" "+who:"")};}
-  if(right)return{cls:"good",big:"Correct!",msg:who+" Great detective work!"};
-  return{cls:"bad",big:"Wrong!",msg:(v.myVote?"Not quite. ":"You didn't vote. ")+who};
+  if(hits===v.reveal.imps.length&&wrong===0)return{cls:"good",big:"Correct!",msg:who+" Great detective work!"};
+  if(hits>0)return{cls:"close",big:"So close!",msg:"You got "+hits+" right, but "+(wrong>0?"you also picked someone who wasn't. ":"you missed one. ")+who};
+  return{cls:"bad",big:"Wrong!",msg:(picks.length?"Not quite. ":"You didn't vote. ")+who};
 }
 function playReveal(v){
   var o=$("overlay");o.className="overlay wait";o.innerHTML="";
