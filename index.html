@@ -55,7 +55,7 @@ p{line-height:1.5; margin:8px 0}
 :focus-visible{outline:4px solid var(--sky); outline-offset:3px}
 .panel{background:var(--grape-2); border:4px solid var(--ink); border-radius:26px; padding:18px; margin:16px 0; box-shadow:0 8px 0 var(--ink)}
 .rules{text-align:left; font-size:17px}
-.rules ol{padding-left:22px; margin:6px 0} .rules li{margin:6px 0}
+.rules ol,.rules ul{padding-left:22px; margin:6px 0} .rules li{margin:6px 0}
 .stepper{display:flex; align-items:center; justify-content:center; gap:18px}
 .stepper button{width:64px; height:64px; border-radius:50%; font-size:34px; padding:0; margin:0; display:grid; place-items:center}
 .count{font-family:"Lilita One",sans-serif; font-size:64px; min-width:90px; color:var(--sun)}
@@ -134,6 +134,7 @@ button.pchip{cursor:pointer}
   <p class="tag">Everyone gets the secret word… except the imposter.</p>
   <button class="btn" id="goHost">Host the game</button>
   <button class="btn sky" id="goJoin">Join as a player</button>
+  <button class="btn pink" id="goGuide">📖 How to play</button>
   <div class="panel rules">
     <h2 style="font-size:26px">How to play</h2>
     <ol>
@@ -144,6 +145,60 @@ button.pchip{cursor:pointer}
       <li>Vote for who you think the imposter is. Pick 2 names if you think there are 2 imposters. Then the host taps <b>Big reveal</b>!</li>
     </ol>
   </div>
+</section>
+
+<section id="guide" class="hidden">
+  <h2>📖 How to play</h2>
+  <div class="panel rules">
+    <h2 style="font-size:24px">The idea</h2>
+    <p>Everyone gets the same secret word… except the imposter, who only knows the category. Give clues that show you know the word, without making it too easy. Then vote: who's faking it?</p>
+  </div>
+  <div class="panel rules">
+    <h2 style="font-size:24px">What you need</h2>
+    <ul>
+      <li>3 to 12 players, all in the same room.</li>
+      <li>One phone or tablet each, with internet.</li>
+      <li>About 5 minutes a round.</li>
+    </ul>
+  </div>
+  <div class="panel rules">
+    <h2 style="font-size:24px">Set up</h2>
+    <ol>
+      <li><b>One person hosts.</b> They tap <b>Host the game</b>, type their name and tap <b>Create game</b>. The host plays too.</li>
+      <li>A <b>QR code</b> and a <b>4-letter code</b> appear on the host's screen.</li>
+      <li><b>Everyone else</b> scans the QR code with their phone camera (or opens this game, taps <b>Join as a player</b> and types the code), types their name and taps <b>Join</b>.</li>
+      <li>The host picks a <b>category</b> (or 🎲 Surprise me) and taps <b>Start game</b> when everyone's names are showing.</li>
+    </ol>
+  </div>
+  <div class="panel rules">
+    <h2 style="font-size:24px">Playing a round</h2>
+    <ol>
+      <li><b>Look at your card in secret.</b> Tap <b>Tap to see your card</b>, read it, then tap <b>Hide my card</b>. Don't let anyone see!</li>
+      <li>Most people see the <b>secret word</b>. The imposter sees <b>"You're the imposter!"</b>. With 4 or more players there might be 2 imposters.</li>
+      <li>The host taps <b>Spin</b> to choose who goes first (it's never an imposter).</li>
+      <li><b>Go around the circle twice.</b> On your turn say <b>one clue word</b>. That's 2 clue words each.</li>
+      <li>Then the host taps <b>Choose imposter</b>. Everyone votes on their own phone. You can change your vote until the reveal.</li>
+      <li>The host taps <b>Big reveal</b>. Your phone shows if you were right!</li>
+    </ol>
+  </div>
+  <div class="panel rules">
+    <h2 style="font-size:24px">Tips</h2>
+    <ul>
+      <li><b>Not too easy, not too hard.</b> For "Pizza", "cheese" is too easy; "triangle" is just right.</li>
+      <li><b>Imposter:</b> listen carefully, then say something that fits the others' clues. Act confident!</li>
+      <li>Don't say the secret word, or a word that gives it away straight off.</li>
+    </ul>
+  </div>
+  <div class="panel rules">
+    <h2 style="font-size:24px">If something goes wrong</h2>
+    <ul>
+      <li><b>"Can't find game":</b> check the 4-letter code on the host's screen.</li>
+      <li><b>A phone drops out:</b> open the game again; it reconnects by itself.</li>
+      <li><b>Wrong person joined:</b> the host taps their name in the lobby to remove them.</li>
+      <li>The <b>host's phone must stay on this game</b> until you finish. If it closes, the game ends.</li>
+    </ul>
+  </div>
+  <button class="btn" data-guideback>Back</button>
 </section>
 
 <section id="hostStart" class="hidden">
@@ -283,7 +338,7 @@ function load(k){try{return localStorage.getItem(k);}catch(e){return null;}}
 function rnd(n){return Math.floor(Math.random()*n);}
 function cleanName(s){return (s||"").replace(/\s+/g," ").trim().slice(0,12);}
 
-var SCREENS=["home","hostStart","joinStart","connecting","lobby","round","vote","results","waiting","ended"];
+var SCREENS=["home","guide","hostStart","joinStart","connecting","lobby","round","vote","results","waiting","ended"];
 function show(id){SCREENS.forEach(function(s){$(s).classList.toggle("hidden",s!==id);});}
 function banner(msg){$("banner").textContent=msg||"";$("banner").classList.toggle("hidden",!msg);}
 document.querySelectorAll("[data-home]").forEach(function(b){b.onclick=function(){location.href=location.pathname;};});
@@ -597,6 +652,8 @@ if("serviceWorker" in navigator&&/^https?:/.test(location.protocol)){window.addE
 var last={};try{last=JSON.parse(load("imp_last")||"{}");}catch(e){}
 $("goHost").onclick=function(){$("hostName").value=load("imp_name")||"";show("hostStart");$("hostName").focus();};
 $("goJoin").onclick=function(){openJoin("");};
+$("goGuide").onclick=function(){show("guide");window.scrollTo(0,0);};
+document.querySelectorAll("[data-guideback]").forEach(function(b){b.onclick=function(){show("home");window.scrollTo(0,0);};});
 function openJoin(code){$("roomIn").value=code||"";$("joinName").value=load("imp_name")||"";$("joinErr").textContent="";show("joinStart");
   (code?$("joinName"):$("roomIn")).focus();}
 $("createGame").onclick=function(){
